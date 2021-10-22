@@ -1,0 +1,22 @@
+{
+    "autoload": {
+        "psr-4": {
+            "Draw\\Bundle\\CommandBundle\\": ""
+        }
+    },
+    "require": {
+        "sensiolabs/ansi-to-html": "^1.2",
+        "symfony/console": "^4.4|^5.3"
+    },
+    "require-dev": {
+        "symfony/security-core": "^4.4|^5.3"
+    },
+    "suggest": {
+        "symfony/security-core": "If you want to user authentication in command line"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.8-dev"
+        }
+    }
+}
