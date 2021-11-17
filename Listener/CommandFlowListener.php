@@ -7,7 +7,6 @@ use Doctrine\DBAL\Connections\PrimaryReadReplicaConnection;
 use Doctrine\DBAL\Exception as DBALException;
 use Draw\Bundle\CommandBundle\Entity\Execution;
 use Draw\Bundle\CommandBundle\Event\CommandErrorEvent;
-use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Event;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Input\InputOption;
@@ -39,11 +38,6 @@ class CommandFlowListener implements EventSubscriberInterface
      */
     private $eventDispatcher;
 
-    /**
-     * @var Application
-     */
-    private $application;
-
     public static function getSubscribedEvents(): array
     {
         return [
@@ -59,13 +53,11 @@ class CommandFlowListener implements EventSubscriberInterface
 
     public function __construct(
         Connection $executionConnection,
-        EventDispatcherInterface $eventDispatcher,
-        Application $application
+        EventDispatcherInterface $eventDispatcher
     )
     {
         $this->connection = $executionConnection;
         $this->eventDispatcher = $eventDispatcher;
-        $this->application = $application;
     }
 
     /**
@@ -177,7 +169,7 @@ class CommandFlowListener implements EventSubscriberInterface
         $error = $exceptionEvent->getError();
 
         $output = new BufferedOutput(Output::VERBOSITY_DEBUG, true);
-        $this->application->renderThrowable($error, $output);
+        $exceptionEvent->getCommand()->getApplication()->renderThrowable($error, $output);
         $outputString = $output->fetch();
 
         $commandErrorEvent = new CommandErrorEvent($executionId, $outputString);

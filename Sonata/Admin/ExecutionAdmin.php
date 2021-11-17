@@ -22,6 +22,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ExecutionAdmin extends AbstractAdmin
 {
@@ -164,12 +165,19 @@ class ExecutionAdmin extends AbstractAdmin
 
         $collection->remove('edit');
         $collection->add('acknowledge', $this->getRouterIdParameter().'/acknowledge');
+        $collection->add('report', 'report');
     }
 
     public function backwardCompatibleConfigureActionButtons(array $buttonList, $action, $object = null): array
     {
         if ('show' == $action && Execution::STATE_ERROR == $object->getState()) {
-            $buttonList['acknowledge']['template'] = '@DrawCommand\ExecutionAdmin\button_acknowledge.html.twig';
+            $buttonList['acknowledge']['template'] = '@DrawCommand/ExecutionAdmin/button_acknowledge.html.twig';
+        }
+
+        if (!$object) {
+            $list['report'] = [
+                'template' => '@DrawCommand/ExecutionAdmin/report_action_button.html.twig',
+            ];
         }
 
         return $buttonList;
@@ -200,6 +208,20 @@ class ExecutionAdmin extends AbstractAdmin
         );
         $output = new BufferedOutput(OutputInterface::OUTPUT_NORMAL, true);
         $application->run($input, $output);
+    }
+
+    public function generateStatusFilterUrl(string $reason): string
+    {
+        return $this->generateUrl(
+            'list',
+            [
+                'filter' => [
+                    'autoAcknowledgeReason' => ['value' => $reason],
+                    'state' => ['value' => Execution::STATE_AUTO_ACKNOWLEDGE],
+                ],
+            ],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
     }
 
     private function getAutoAcknowledgeReasons(): array
