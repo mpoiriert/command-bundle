@@ -234,8 +234,7 @@ SQL;
         $this->connection->prepare($query)->execute($parameters);
 
         if ($reconnectToSlave) {
-            /* @var PrimaryReadReplicaConnection $connection */
-            // $connection->connect('slave');
+            $this->connection->ensureConnectedToReplica();
         }
     }
 
@@ -282,8 +281,7 @@ SQL;
         $executionId = $this->connection->lastInsertId();
 
         if ($reconnectToSlave) {
-            /* @var PrimaryReadReplicaConnection $connection */
-            // $connection->connect('slave');
+            $this->connection->ensureConnectedToReplica();
         }
 
         return (int) $executionId;

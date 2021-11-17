@@ -66,7 +66,7 @@ class ExecutionController extends CRUDController
     public function reportAction(EntityManagerInterface $entityManager): Response
     {
         $stats = $entityManager->createQueryBuilder()
-            ->from(\Draw\SonataCommandBundle\Entity\Execution::class, 'execution')
+            ->from(Execution::class, 'execution')
             ->addSelect('execution.autoAcknowledgeReason as reason')
             ->addSelect('COUNT(execution.id) as count')
             ->andWhere('execution.autoAcknowledgeReason IS NOT NULL')
@@ -76,7 +76,7 @@ class ExecutionController extends CRUDController
             ->getQuery()
             ->getResult();
 
-        return $this->renderWithExtraParams('@DrawSonataCommand/ExecutionAdmin/report.html.twig', [
+        return $this->renderWithExtraParams('@DrawCommand/ExecutionAdmin/report.html.twig', [
             'action' => 'report', // to show actions buttons
             'stats' => $stats,
         ]);

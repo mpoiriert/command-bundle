@@ -175,7 +175,7 @@ class ExecutionAdmin extends AbstractAdmin
         }
 
         if (!$object) {
-            $list['report'] = [
+            $buttonList['report'] = [
                 'template' => '@DrawCommand/ExecutionAdmin/report_action_button.html.twig',
             ];
         }
