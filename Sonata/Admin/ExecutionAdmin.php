@@ -2,6 +2,8 @@
 
 namespace Draw\Bundle\CommandBundle\Sonata\Admin;
 
+use Doctrine\ORM\AbstractQuery;
+use Doctrine\ORM\EntityManagerInterface;
 use Draw\Bundle\CommandBundle\CommandRegistry;
 use Draw\Bundle\CommandBundle\Entity\Execution;
 use Draw\Bundle\CommandBundle\Listener\CommandFlowListener;
@@ -34,12 +36,18 @@ class ExecutionAdmin extends AbstractAdmin
     private $kernel;
 
     /**
+     * @var EntityManagerInterface
+     */
+    private $entityManager;
+
+    /**
      * @required
      */
-    public function inject(CommandRegistry $commandFactory, KernelInterface $kernel)
+    public function inject(CommandRegistry $commandFactory, KernelInterface $kernel, EntityManagerInterface $entityManager)
     {
         $this->kernel = $kernel;
         $this->commandFactory = $commandFactory;
+        $this->entityManager = $entityManager;
     }
 
     /**
@@ -69,6 +77,8 @@ class ExecutionAdmin extends AbstractAdmin
 
     protected function configureDatagridFilters(DatagridMapper $filter): void
     {
+        $autoAcknowledgeReasons = $this->getAutoAcknowledgeReasons();
+
         $filter
             ->add('id')
             ->add('command')
@@ -87,7 +97,17 @@ class ExecutionAdmin extends AbstractAdmin
                 ]
             )
             ->add('output')
-            ->add('createdAt');
+            ->add('createdAt')
+            ->add(
+                'autoAcknowledgeReason',
+                ChoiceFilter::class,
+                [
+                    'field_type' => ChoiceType::class,
+                    'field_options' => [
+                        'choices' => array_combine($autoAcknowledgeReasons, $autoAcknowledgeReasons),
+                    ],
+                ],
+            );
     }
 
     protected function configureListFields(ListMapper $list): void
@@ -97,7 +117,8 @@ class ExecutionAdmin extends AbstractAdmin
             ->add('command')
             ->add('commandName')
             ->add('state')
-            ->add('createdAt');
+            ->add('createdAt')
+            ->add('autoAcknowledgeReason');
     }
 
     protected function configureShowFields(ShowMapper $show): void
@@ -112,6 +133,7 @@ class ExecutionAdmin extends AbstractAdmin
                     ->add('createdAt')
                     ->add('updatedAt')
                     ->add('input', 'array')
+                    ->add('autoAcknowledgeReason')
                 ->end()
                 ->with('Execution')
                     ->add('commandLine', 'text')
@@ -178,5 +200,21 @@ class ExecutionAdmin extends AbstractAdmin
         );
         $output = new BufferedOutput(OutputInterface::OUTPUT_NORMAL, true);
         $application->run($input, $output);
+    }
+
+    private function getAutoAcknowledgeReasons(): array
+    {
+        $result = $this->entityManager
+            ->createQueryBuilder()
+            ->from(Execution::class, 'e')
+            ->select('e.autoAcknowledgeReason')
+            ->andWhere('e.state = :state')->setParameter('state', Execution::STATE_AUTO_ACKNOWLEDGE)
+            ->groupBy('e.autoAcknowledgeReason')
+            ->getQuery()
+            ->getResult(AbstractQuery::HYDRATE_SCALAR);
+
+        $result = array_column($result, 'autoAcknowledgeReason');
+
+        return array_values(array_filter($result));
     }
 }
